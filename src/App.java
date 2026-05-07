@@ -1,6 +1,7 @@
 import java.nio.charset.Charset;
 import java.time.LocalDate;
 import java.util.Scanner;
+import java.util.NoSuchElementException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -22,6 +23,9 @@ public class App {
     /** Pilha de pedidos */
     static Pilha<Pedido> pilhaPedidos = new Pilha<>();
         
+    /** Pilha de produtos mais recentemente pedidos */
+    static Pilha<Produto> pilhaProdutosRecentes = new Pilha<>();
+
     static void limparTela() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -64,6 +68,7 @@ public class App {
         System.out.println("4 - Iniciar novo pedido");
         System.out.println("5 - Fechar pedido");
         System.out.println("6 - Listar produtos dos pedidos mais recentes");
+        System.out.println("7 - Testar Pilha (Tarefa 1)");
         System.out.println("0 - Sair");
         System.out.print("Digite sua opção: ");
         return Integer.parseInt(teclado.nextLine());
@@ -210,12 +215,100 @@ public class App {
      */
     public static void finalizarPedido(Pedido pedido) {
     	
-    	// TODO
+    	if (pedido == null) {
+    		System.out.println("Não há um pedido em andamento para ser finalizado.");
+    		return;
+    	}
+    	
+    	pilhaPedidos.empilhar(pedido);
+    	
+    	ItemDePedido[] itens = pedido.getItensDoPedido();
+    	for (ItemDePedido item : itens) {
+    		if (item != null) {
+    			pilhaProdutosRecentes.empilhar(item.getProduto());
+    		}
+    	}
+    	
+    	System.out.println("Pedido finalizado e produtos armazenados com sucesso!");
     }
     
     public static void listarProdutosPedidosRecentes() {
     	
-    	// TODO
+    	Integer numItens = lerOpcao("Quantos produtos recentes você deseja visualizar?", Integer.class);
+    	if (numItens == null) {
+    		System.out.println("Opção inválida.");
+    		return;
+    	}
+    	
+    	try {
+    		Pilha<Produto> recentes = pilhaProdutosRecentes.subPilha(numItens);
+    		System.out.println("\n--- " + numItens + " Produtos Mais Recentes ---");
+    		recentes.imprimir();
+    	} catch (IllegalArgumentException e) {
+    		System.out.println("Erro: " + e.getMessage());
+    	}
+    }
+    
+    /**
+     * Método para testar a pilha flexível com os dígitos da matrícula.
+     * Insere os dígitos únicos da matrícula na pilha e testa os métodos
+     * empilhar, desempilhar e consultarTopo.
+     */
+    public static void testarPilha() {
+    	
+    	// Número de matrícula para teste (modifique conforme necessário)
+    	String matricula = "766211";
+    	
+    	System.out.println("\n========== TESTE PRELIMINAR DA PILHA ==========");
+    	System.out.println("Matrícula: " + matricula);
+    	System.out.println("============================================\n");
+    	
+    	// Criar pilha de Integer
+    	Pilha<Integer> pilha = new Pilha<>();
+    	
+    	// Array para rastrear dígitos já inseridos (0-9)
+    	boolean[] digitos = new boolean[10];
+    	
+    	// Empilhar dígitos únicos da matrícula
+    	System.out.println("1. EMPILHANDO DÍGITOS ÚNICOS DA MATRÍCULA:");
+    	for (int i = 0; i < matricula.length(); i++) {
+    		int digito = Character.getNumericValue(matricula.charAt(i));
+    		
+    		// Verificar se o dígito já foi inserido
+    		if (!digitos[digito]) {
+    			pilha.empilhar(digito);
+    			digitos[digito] = true;
+    			System.out.println("   Empilhado: " + digito);
+    		} else {
+    			System.out.println("   Dígito " + digito + " já estava na pilha (repetido, não inserido)");
+    		}
+    	}
+    	
+    	// Imprimir conteúdo da pilha
+    	System.out.println("\n2. IMPRIMINDO PILHA (do topo para o fundo):");
+    	pilha.imprimir();
+        System.out.println("\n3. IMPRIMINDO PILHA COM ORDEM INVERSA (do fundo para o topo):");
+        pilha.imprimir_certo();
+    	
+        System.out.println("\n4. TESTANDO DESEMPILHAR:");
+        int desempilhado = pilha.desempilhar();
+        System.out.println("   Item desempilhado: " + desempilhado);
+        System.out.println("   Novo topo da pilha: " + pilha.consultarTopo());
+        
+        System.out.println("\n5. ESVAZIANDO A PILHA:");
+        while (!pilha.vazia()) {
+            System.out.println("   Desempilhado: " + pilha.desempilhar());
+        }
+        
+    	// Teste de exceção
+    	System.out.println("\n6. TESTANDO EXCEÇÃO (consultarTopo em pilha vazia):");
+    	try {
+    		pilha.consultarTopo();
+    	} catch (NoSuchElementException e) {
+    		System.out.println("   Exceção capturada corretamente: " + e.getMessage());
+    	}
+    	
+    	System.out.println("\n========== FIM DO TESTE ==========\n");
     }
     
 	public static void main(String[] args) {
@@ -236,8 +329,12 @@ public class App {
                 case 2 -> mostrarProduto(localizarProduto());
                 case 3 -> mostrarProduto(localizarProdutoDescricao());
                 case 4 -> pedido = iniciarPedido();
-                case 5 -> finalizarPedido(pedido);
+                case 5 -> {
+                    finalizarPedido(pedido);
+                    pedido = null;
+                }
                 case 6 -> listarProdutosPedidosRecentes();
+                case 7 -> testarPilha();
             }
             pausa();
         }while(opcao != 0);       
