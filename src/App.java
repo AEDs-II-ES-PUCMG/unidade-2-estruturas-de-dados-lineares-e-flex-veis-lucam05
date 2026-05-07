@@ -26,6 +26,9 @@ public class App {
     /** Pilha de produtos mais recentemente pedidos */
     static Pilha<Produto> pilhaProdutosRecentes = new Pilha<>();
 
+    /** Fila de pedidos aguardando processamento */
+    static Fila<Pedido> filaPedidos = new Fila<>();
+
     static void limparTela() {
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -68,7 +71,9 @@ public class App {
         System.out.println("4 - Iniciar novo pedido");
         System.out.println("5 - Fechar pedido");
         System.out.println("6 - Listar produtos dos pedidos mais recentes");
-        System.out.println("7 - Testar Pilha (Tarefa 1)");
+        System.out.println("7 - Testar Pilha");
+        System.out.println("8 - Testar Fila ");
+        System.out.println("9 - Processar Lote de Pedidos ");
         System.out.println("0 - Sair");
         System.out.print("Digite sua opção: ");
         return Integer.parseInt(teclado.nextLine());
@@ -221,6 +226,7 @@ public class App {
     	}
     	
     	pilhaPedidos.empilhar(pedido);
+    	filaPedidos.enfileirar(pedido);
     	
     	ItemDePedido[] itens = pedido.getItensDoPedido();
     	for (ItemDePedido item : itens) {
@@ -229,7 +235,7 @@ public class App {
     		}
     	}
     	
-    	System.out.println("Pedido finalizado e produtos armazenados com sucesso!");
+    	System.out.println("Pedido finalizado, inserido na fila e produtos armazenados com sucesso!");
     }
     
     public static void listarProdutosPedidosRecentes() {
@@ -311,6 +317,64 @@ public class App {
     	System.out.println("\n========== FIM DO TESTE ==========\n");
     }
     
+    /**
+     * Método para testar a fila flexível com os caracteres do nome (Tarefa 1).
+     */
+    public static void testarFila() {
+    	
+    	String nome = "Luca Monteiro";
+    	
+    	System.out.println("\n========== TESTE PRELIMINAR DA FILA ==========");
+    	System.out.println("Nome: " + nome);
+    	System.out.println("============================================\n");
+    	
+    	Fila<Character> fila = new Fila<>();
+    	
+    	System.out.println("1. ENFILEIRANDO CARACTERES DO NOME:");
+    	for (int i = 0; i < nome.length(); i++) {
+    		char c = nome.charAt(i);
+    		fila.enfileirar(c);
+    		System.out.println("   Enfileirado: " + c);
+    	}
+    	
+    	System.out.println("\n2. IMPRIMINDO FILA:");
+    	fila.imprimir();
+    	
+        char charBusca = 'o';
+        System.out.println("\n3. CONTANDO OCORRÊNCIAS DO CARACTERE '" + charBusca + "':");
+        int ocorrencias = fila.contarCaracteres(charBusca);
+        System.out.println("   Ocorrências: " + ocorrencias);
+        
+        System.out.println("\n4. TESTANDO DESENFILEIRAR:");
+        char desenfileirado = fila.desenfileirar();
+        System.out.println("   Item desenfileirado: " + desenfileirado);
+        System.out.println("   Novo primeiro da fila: " + fila.consultarPrimeiro());
+        
+        System.out.println("\n5. ESVAZIANDO A FILA:");
+        while (!fila.vazia()) {
+            System.out.println("   Desenfileirado: " + fila.desenfileirar());
+        }
+        
+    	System.out.println("\n========== FIM DO TESTE ==========\n");
+    }
+
+    public static void processarLotePedidos() {
+    	
+        Integer numItens = lerOpcao("Quantos pedidos deseja extrair do lote para processamento?", Integer.class);
+        if (numItens == null) {
+            System.out.println("Opção inválida.");
+            return;
+        }
+        
+        try {
+            Fila<Pedido> lote = filaPedidos.extrairLote(numItens);
+            System.out.println("\n--- Lote de Pedidos Extraídos ---");
+            lote.imprimir();
+        } catch (IllegalArgumentException e) {
+            System.out.println("Erro: " + e.getMessage());
+        }
+    }
+
 	public static void main(String[] args) {
 		
 		teclado = new Scanner(System.in, Charset.forName("UTF-8"));
@@ -335,6 +399,8 @@ public class App {
                 }
                 case 6 -> listarProdutosPedidosRecentes();
                 case 7 -> testarPilha();
+                case 8 -> testarFila();
+                case 9 -> processarLotePedidos();
             }
             pausa();
         }while(opcao != 0);       
